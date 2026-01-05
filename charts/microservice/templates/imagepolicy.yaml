@@ -1,4 +1,4 @@
-{{- if and .Values.enabled .Values.image.autoupdate.enabled }}
+{{- if and .Values.enabled .Values.image.fluxImageAutoUpdate.enabled }}
 apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImagePolicy
 metadata:
@@ -10,10 +10,10 @@ spec:
   imageRepositoryRef:
     name: {{ include "microservice.fullname" . }}
   filterTags:
-    {{- if .Values.image.autoupdate.pattern }}
-    pattern: {{ .Values.image.autoupdate.pattern | quote }}
+    {{- if .Values.image.fluxImageAutoUpdate.pattern }}
+    pattern: {{ .Values.image.fluxImageAutoUpdate.pattern | quote }}
     {{- end }}
   policy:
     semver:
-      range: {{ .Values.image.autoupdate.semver | quote }}
+      range: {{ .Values.image.fluxImageAutoUpdate.semver | quote }}
 {{- end }}

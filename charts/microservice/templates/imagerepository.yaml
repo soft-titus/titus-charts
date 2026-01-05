@@ -1,4 +1,4 @@
-{{- if and .Values.enabled .Values.image.autoupdate.enabled }}
+{{- if and .Values.enabled .Values.image.fluxImageAutoUpdate.enabled }}
 apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImageRepository
 metadata:

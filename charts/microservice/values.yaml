@@ -1,0 +1,533 @@
+# Default values for microservice Helm chart
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# enabled: Whether to deploy this microservice
+# Set to false to prevent all resources from being rendered.
+# Useful for GitOps (e.g. Flux) when disabling a release without deleting it.
+enabled: true
+
+# nameOverride: Override the chart name used in templates.
+# Useful if you want to deploy the chart with a different base name.
+nameOverride: ""
+
+# fullnameOverride: Override the full resource name for all generated Kubernetes objects.
+# This completely replaces the default release + chart naming.
+fullnameOverride: ""
+
+# image: Docker image settings for the microservice
+image:
+  # image.repository: container image location
+  repository: ghcr.io/soft-titus/hello
+  # image.tag: version of the image to deploy
+  tag: "1.0.0"
+  # image.pullPolicy: when to pull the image (Always, IfNotPresent, Never)
+  pullPolicy: IfNotPresent
+  # image.autoupdate: Flux-based image automation configuration
+  # When enabled, this chart will create Flux ImageRepository and ImagePolicy
+  # resources to automatically track and select container image versions.
+  # This require flux to be installed on the cluster,
+  # with extra components image-reflector-controller and image-automation-controller
+  # Beside that, you need to create 
+  # flux ImageUpdateAutomation resource outside of this chart
+  # in order to allow flux to apply the update back to the git repo
+  autoupdate:
+    # image.autoupdate.enabled: Enable or disable Flux image auto-update support
+    # If true, flux ImageRepository and ImagePolicy resources will be created.
+    enabled: false
+    # image.autoupdate.pattern: Regex pattern used to filter image tags
+    # Only tags matching this pattern will be considered by the ImagePolicy.
+    pattern: "^[1-9]+\\.[0-9]+\\.[0-9]+$"
+    # image.autoupdate.semver: SemVer range used to select the latest image tag
+    # Takes effect only when tags follow semantic versioning.
+    semver: ">=1.0.0 <2.0.0"
+
+# imagePullSecrets: Optional: secrets for pulling images from private registries
+# Provide names of Kubernetes secrets containing credentials
+# Example:
+# imagePullSecrets:
+#   - name: docker-secrets
+imagePullSecrets: []
+
+# command: Override the container entrypoint.
+# This maps to Kubernetes container.command.
+# If empty, the image's ENTRYPOINT will be used.
+# Example:
+# command:
+#   - "/app/server"
+command: []
+
+# args: Override the container command arguments.
+# This maps to Kubernetes container.args.
+# If empty, the image's CMD will be used.
+# Example:
+# args:
+#   - "--port"
+#   - "8080"
+args: []
+
+# env: Environment variables for the container
+# Supports both direct values and valueFrom (Secret / ConfigMap)
+# Example:
+# env:
+#   - name: LOG_LEVEL
+#     value: info
+#   - name: DATABASE_PASSWORD
+#     valueFrom:
+#       secretKeyRef:
+#         name: db-credentials
+#         key: password
+#   - name: DATABASE_HOST
+#     valueFrom:
+#       configMapKeyRef:
+#         name: db-config
+#         key: host
+env: []
+
+# envFrom: Import environment variables from all keys in a Secret or ConfigMap
+# Each key becomes an environment variable in the container
+# Example:
+# envFrom:
+#   - secretRef:
+#       name: app-secrets
+#   - configMapRef:
+#       name: app-config
+envFrom: []
+
+# configMaps: Define ConfigMaps managed by this chart
+# This chart supports three different ConfigMap use cases:
+#   1. env          : Key/value pairs exposed as environment variables
+#   2. files        : Text-based configuration files mounted into the container
+#   3. binaryFiles  : Binary data (e.g. logo, image) mounted as files
+# Each section can be enabled independently and will result in a separate
+# ConfigMap being created and mounted or injected accordingly.
+# Notes:
+# - env ConfigMap is typically consumed via envFrom in the Deployment
+# - files and binaryFiles ConfigMaps are mounted as volumes
+# - data keys represent filenames when mounted as files
+# - binaryFiles data values must be base64-encoded
+configMaps:
+  # configMaps.env: ConfigMap for environment variables
+  # All keys in data will be injected as environment variables
+  env:
+    # configMaps.env.enabled: Enable or disable env ConfigMap
+    enabled: false
+    # configMaps.env.name: Name of the ConfigMap
+    # If empty, a name will be generated from the release fullname
+    name: ""
+    # configMaps.env.data: Key/value pairs for environment variables
+    # Example:
+    # data:
+    #   LOG_LEVEL: "INFO"
+    #   BASE_URL: "https://example.com"
+    data: {}
+  # configMaps.files: ConfigMap for text-based configuration files
+  # Each key in data becomes a file mounted at mountPath
+  files:
+    # configMaps.files.enabled: Enable or disable files ConfigMap
+    enabled: false
+    # configMaps.files.name: Name of the ConfigMap
+    # If empty, a name will be generated from the release fullname
+    name: ""
+    # configMaps.files.mountPath: Path inside the container where files are mounted
+    mountPath: /app/config
+    # configMaps.files.data: File contents (supports multi-line values)
+    # Example:
+    # data:
+    #   config.yaml: |
+    #     server:
+    #       host: 10.20.30.40
+    #       port: 8000
+    data: {}
+  # configMaps.binaryFiles: ConfigMap for binary file data
+  # Intended for non-sensitive binary files, e.g. logo, image, etc.
+  binaryFiles:
+    # configMaps.binaryFiles.enabled: Enable or disable binaryFiles ConfigMap
+    enabled: false
+    # configMaps.binaryFiles.name: Name of the ConfigMap
+    # If empty, a name will be generated from the release fullname
+    name: ""
+    # configMaps.binaryFiles.mountPath: Path inside the container where binary files are mounted
+    mountPath: /app/binary
+    # configMaps.binaryFiles.data: Base64-encoded binary file contents
+    # Example:
+    # data:
+    #   logo.png: <base64-encoded-png-image>
+    data: {}
+
+# pvc: PersistentVolumeClaim configuration for the microservice
+# This allows the deployment to request storage from the cluster.
+# Can be used for logs, data storage, or any persistent files.
+# If pvc.enabled=true and accessModes includes "ReadWriteOnce",
+#    it is strongly recommended to set deploymentStrategy.type to "Recreate".
+#    With "RollingUpdate", Helm upgrade may get stuck if a new pod is scheduled
+#    on a different node while the PVC is still bound to the old pod.
+pvc:
+  # pvc.enabled: Enable or disable PVC creation
+  enabled: false
+  # pvc.name: Name of the PVC. If empty, a name will be generated from the release fullname
+  name: ""
+  # pvc.storageClassName: Name of the StorageClass to use for the PVC
+  # If empty, the default StorageClass will be used
+  storageClassName: ""
+  # pvc.accessModes: Access modes for the volume
+  # Options: ReadWriteOnce, ReadOnlyMany, ReadWriteMany
+  accessModes:
+    - ReadWriteOnce
+  # pvc.resources.requests.storage: Amount of storage to request
+  # Examples: 1Gi, 500Mi
+  resources:
+    requests:
+      storage: 1Gi
+  # pvc.mountPath: Path inside the container where the volume will be mounted
+  mountPath: /data
+
+# livenessProbe: Health check to determine if the container should be restarted
+# If this probe fails repeatedly, Kubernetes will restart the container.
+# Supported probe types: httpGet, tcpSocket, exec
+# Example (choose one of httpGet, tcpSocket, or exec):
+# livenessProbe:
+#   httpGet:
+#     path: /health
+#     port: http
+#     scheme: HTTP
+# # tcpSocket:
+# #   port: 8080
+# # exec:
+# #   command:
+# #     - cat
+# #     - /tmp/healthy
+#   initialDelaySeconds: 5
+#   periodSeconds: 10
+#   timeoutSeconds: 2
+#   successThreshold: 1
+#   failureThreshold: 3
+livenessProbe: {}
+
+# readinessProbe: Health check to determine if the container is ready to receive traffic
+# If this probe fails, the pod is removed from Service endpoints (no traffic sent).
+# Supported probe types: httpGet, tcpSocket, exec
+# Example (choose one of httpGet, tcpSocket, or exec):
+# readinessProbe:
+#   httpGet:
+#     path: /health
+#     port: http
+#     scheme: HTTP
+# # tcpSocket:
+# #   port: 8080
+# # exec:
+# #   command:
+# #     - cat
+# #     - /tmp/healthy
+#   initialDelaySeconds: 5
+#   periodSeconds: 10
+#   timeoutSeconds: 2
+#   successThreshold: 1
+#   failureThreshold: 3
+readinessProbe: {}
+
+# resources: Container resource requests and limits
+# Controls CPU and memory usage for the container.
+resources:
+# resources.requests: minimum resources guaranteed to the container.
+  requests:
+    # resources.requests.cpu: use "m" for millicores (e.g., "100m" = 0.1 CPU)
+    cpu: "100m"
+    # resources.requests.memory: use "Mi" or "Gi" (e.g., "128Mi" = 128 Mebibytes)
+    memory: "128Mi"
+  # resources.limits: maximum resources the container can use.
+  limits:
+    # resources.limits.cpu: use "m" for millicores (e.g., "100m" = 0.1 CPU)
+    cpu: "500m"
+    # resources.limits.memory: use "Mi" or "Gi" (e.g., "128Mi" = 128 Mebibytes)
+    memory: "512Mi"
+
+# replicaCount: Number of pod replicas to run for this microservice
+replicaCount: 1
+
+# deploymentStrategy: Controls how Kubernetes updates pods when the Deployment changes.
+# You can choose either:
+#   - RollingUpdate: Gradually updates pods to avoid downtime
+#   - Recreate: Deletes all old pods before creating new ones
+deploymentStrategy:
+  # deploymentStrategy.type: Type of deployment strategy: "RollingUpdate" or "Recreate"
+  type: RollingUpdate
+ # deploymentStrategy.rollingUpdate: Configuration for RollingUpdate strategy only.
+  # Ignored if type is "Recreate".
+  rollingUpdate:
+    # deploymentStrategy.rollingUpdate.maxUnavailable: Maximum number of pods that can be unavailable during an update.
+    # Can be an absolute number (1) or a percentage (e.g., "25%").
+    maxUnavailable: 0
+    # deploymentStrategy.rollingUpdate.maxSurge: Maximum number of extra pods that can be scheduled above the desired replicas during an update.
+    # Can be an absolute number (1) or a percentage (e.g., "25%").
+    maxSurge: 1
+
+# hpa: Horizontal Pod Autoscaler configuration
+# require metrics server to be install on the kubernetes cluster
+hpa:
+  # hpa.enabled: Enable or disable HPA
+  enabled: false
+  # hpa.minReplicas: Minimum number of pod replicas
+  minReplicas: 1
+  # hpa.maxReplicas: Maximum number of pod replicas
+  maxReplicas: 10
+  # hpa.targetCPUUtilizationPercentage: Target average CPU utilization across pods (optional)
+  # hpa.targetMemoryUtilizationPercentage: Target average memory utilization across pods (optional)
+  # must use 1 of it or can combine both
+  # if none provided then the default behaviour is targetCPUUtilizationPercentage=80
+  # targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 75
+
+# pdb: PodDisruptionBudget configuration
+# Controls how many pods can be voluntarily disrupted at once
+# (e.g. during node drain, cluster upgrade).
+pdb:
+  # pdb.enabled: Enable or disable PodDisruptionBudget
+  enabled: false
+  # pdb.unhealthyPodEvictionPolicy: Controls eviction of unhealthy pods
+  # Possible values: IfHealthyBudget, AlwaysAllow
+  unhealthyPodEvictionPolicy: IfHealthyBudget
+  # pdb.minAvailable: Minimum number or percentage of pods that must be available
+  # pdb.maxUnavailable: Maximum number or percentage of pods that can be unavailable
+  # Notes:
+  # 1. Do NOT provide both minAvailable and maxUnavailable (mutually exclusive)
+  # 2. If neither is provided while pdb.enabled=true, Helm will fail rendering
+  # 3. For single-replica workloads (replicaCount or hpa.minReplicas = 1), PDB will not be created
+  # 4. minAvailable must be less than the effective replica count
+  # 5. Values can be absolute numbers (e.g., 2) or percentages (e.g., "25%")
+  # Examples:
+  # minAvailable: 1
+  #   OR
+  # maxUnavailable: "25%"
+
+# service: Service configuration for exposing the application
+service:
+  # service.enabled: if set to false, no Service will be created
+  enabled: true
+  # service.type: Kubernetes Service type
+  # Common values: ClusterIP, NodePort, LoadBalancer
+  type: ClusterIP
+  # service.ports: list of ports exposed by the Service and container
+  # Each entry maps a Service port to a container port
+  #   - service.ports.*.name: Name of the port, used to bind Service port and container port (required, must be unique)
+  #   - service.ports.*.port: Service-facing port (clients connect to this)
+  #   - service.ports.*.containerPort: Container port (where the app listens)
+  #   - service.ports.*.protocol: TCP or UDP
+  ports:
+    - name: http
+      port: 80
+      containerPort: 8080
+      protocol: TCP
+    - name: metrics
+      port: 9090
+      containerPort: 9090
+      protocol: TCP
+
+# ingress: Optional Ingress configuration to expose the service externally
+# Can be used to route traffic from outside the cluster to this microservice
+# NOTE:
+# - Ingress requires an Ingress controller to be installed in the cluster (e.g., nginx, traefik).
+# - ingress.ingressClassName must match the class provided by the installed controller.
+ingress:
+  # ingress.enabled: Enable or disable creation of an Ingress resource
+  enabled: false
+  # ingress.ingressClassName: Name of the IngressClass to use (e.g., "nginx", "traefik")
+  # If empty, the cluster default IngressClass will be used
+  ingressClassName: ""
+  # ingress.annotations: Key/value annotations to apply to the Ingress resource
+  # Useful for cert-manager, Nginx-specific settings, or other Ingress controller options
+  # Example:
+  # annotations:
+  #   kubernetes.io/ingress.class: nginx
+  #   cert-manager.io/cluster-issuer: letsencrypt
+  annotations: {}
+  # ingress.hosts: List of host rules for the Ingress
+  # Each host can define multiple paths and the path type
+  # Each path will route traffic to the configured backend (serviceName + servicePort)
+  # If using TLS, make sure hosts here match the TLS hosts
+  #   - ingress.hosts.*.host: Hostname for this ingress rule
+  #   - ingress.hosts.*.paths: List of paths for this host
+  #   - ingress.hosts.*.paths.*.path: URL path to match for the host
+  #   - ingress.hosts.*.paths.*.pathType: Path matching type (Prefix, Exact, ImplementationSpecific)
+  #   - ingress.hosts.*.paths.*.serviceName: name of the Service to route traffic to, Defaults to the service created by this chart if empty
+  #   - ingress.hosts.*.paths.*.servicePort: port number or name of the Service, Defaults to the first port in .Values.service.ports
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: Prefix
+          serviceName: ""
+          servicePort: http
+        - path: /metrics
+          pathType: Prefix
+          serviceName: ""
+          servicePort: 9090
+  # ingress.tls: Optional TLS configuration
+  # Each entry specifies a secretName containing TLS certificates and the hosts it applies to
+  # Example:
+  # tls:
+  #   - secretName: chart-example-tls
+  #     hosts:
+  #       - chart-example.local
+  tls: []
+
+# serviceAccount: ServiceAccount configuration for the microservice
+serviceAccount:
+  # serviceAccount.create : Whether to create a new ServiceAccount for the release
+  create: false
+  # serviceAccount.automount: Whether to automatically mount the ServiceAccount token into pods
+  automount: false
+  # serviceAccount.annotations: Annotations to add to the ServiceAccount (optional)
+  # Example:
+  # annotations:
+  #   monitoring: true
+  annotations: {}
+  # serviceAccount.name: Name of the ServiceAccount to use.
+  # If empty and `create: true`, a name will be generated from fullname template
+  name: ""
+
+# podAnnotations: Annotations to add to all pods created by this release
+# Example:
+# podAnnotations:
+#   prometheus.io/scrape: "true"
+podAnnotations: {}
+
+# podLabels: Labels to add to all pods created by this release
+# Example:
+# podLabels:
+#   app.kubernetes.io/component: backend
+podLabels: {}
+
+# podSecurityContext: Pod-level security settings
+# Example:
+# podSecurityContext:
+#   runAsUser: 1000
+#   runAsGroup: 3000
+#   fsGroup: 2000
+#   seccompProfile:
+#     type: RuntimeDefault
+podSecurityContext: {}
+
+# securityContext: Container-level security settings
+# These settings apply to individual containers and can override podSecurityContext.
+# Example:
+# securityContext:
+#   runAsNonRoot: true
+#   allowPrivilegeEscalation: false
+#   readOnlyRootFilesystem: true
+#   capabilities:
+#     drop:
+#       - ALL
+securityContext: {}
+
+# volumes: Define additional Kubernetes volumes to mount into the pods
+# Useful for ConfigMaps, Secrets, persistent storage, or emptyDirs
+# Example:
+# volumes:
+#   - name: config-volume
+#     configMap:
+#       name: my-config
+#   - name: secret-volume
+#     secret:
+#       secretName: my-secret
+volumes: []
+
+# volumeMounts: Mount volumes defined in `volumes` into containers
+# Each entry maps a volume to a path inside the container
+# Example:
+# volumeMounts:
+#   - name: config-volume
+#     mountPath: /app/config
+#     readOnly: true
+#   - name: secret-volume
+#     mountPath: /app/secret
+#     readOnly: true
+volumeMounts: []
+
+# nodeSelector: Use to schedule pods on nodes with specific labels.
+# Example:
+# nodeSelector:
+#   has-gpu: "true"
+nodeSelector: {}
+
+# tolerations: allow the scheduler to schedule pods onto nodes with matching taints.
+# Example:
+# tolerations:
+#   - key: "architecture"
+#     operator: "Equal"
+#     value: "arm64"
+#     effect: "NoSchedule"
+tolerations: []
+
+# affinity: Provide advanced scheduling rules for pods.
+# Can be used for node affinity, pod affinity, or pod anti-affinity.
+# Example:
+# affinity: 
+#   nodeAffinity:
+#     preferredDuringSchedulingIgnoredDuringExecution:
+#       - weight: 1
+#         preference:
+#           matchExpressions:
+#             - key: "zone"
+#               operator: In
+#               values:
+#                 - "datacenter-1"
+affinity: {}
+
+# priorityClassName: Name of an existing Kubernetes PriorityClass.
+# Example:
+# priorityClassName: "high-priority-worker"
+priorityClassName: ""
+
+# restartPolicy: Pod restart behavior
+# Valid values: Always
+# NOTE:
+# - For Deployments, Kubernetes only allows "Always".
+# - Other values (OnFailure, Never) are only valid for Jobs/CronJobs
+restartPolicy: Always
+
+# terminationGracePeriodSeconds: Time (in seconds) Kubernetes waits
+# for the Pod to shut down gracefully after SIGTERM before force killing it.
+# Defaults to Kubernetes behavior if not set. (30) seconds
+terminationGracePeriodSeconds: null
+
+# initContainers: Define one or more init containers for the pod
+# Init containers run before app containers start, useful for setup tasks
+# that need to complete before the main container starts.
+# Each entry maps directly to a Kubernetes container spec.
+# Example:
+# initContainers:
+#   - name: wait-for-db
+#     image: busybox:latest
+#     command:
+#       - sh
+#       - -c
+#       - |
+#         echo "Waiting for database..."
+#         until nc -z db-host 5432; do
+#           echo "Database not ready yet, retrying in 5s..."
+#           sleep 5
+#         done
+#         echo "Database is ready!"
+initContainers: []
+
+# sidecars: Define one or more sidecar containers for the pod
+# Sidecars run alongside the main application container.
+# Useful for logging, metrics, proxying, or helper processes.
+# Each entry maps directly to a Kubernetes container spec.
+# Example:
+# sidecars:
+#   - name: log-collector
+#     image: busybox:1.34
+#     command:
+#       - sh
+#       - -c
+#       - |
+#         while true; do
+#           tail -f /var/log/app.log
+#           sleep 5
+#         done
+#     volumeMounts:
+#       - name: log-volume
+#         mountPath: /var/log
+sidecars: []

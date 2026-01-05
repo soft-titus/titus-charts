@@ -1,0 +1,42 @@
+{{- if .Values.enabled }}
+{{- if .Values.configMaps.env.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ default (printf "%s-env" (include "microservice.fullname" .)) .Values.configMaps.env.name }}
+  labels:
+    {{- include "microservice.labels" . | nindent 4 }}
+data:
+  {{- range $key, $val := .Values.configMaps.env.data }}
+  {{ $key }}: {{ $val | quote }}
+  {{- end }}
+---
+{{- end }}
+{{- if .Values.configMaps.files.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ default (printf "%s-files" (include "microservice.fullname" .)) .Values.configMaps.files.name }}
+  labels:
+    {{- include "microservice.labels" . | nindent 4 }}
+data:
+  {{- range $filename, $content := .Values.configMaps.files.data }}
+  {{ $filename }}: |-
+{{ $content | indent 4 }}
+  {{- end }}
+---
+{{- end }}
+{{- if .Values.configMaps.binaryFiles.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ default (printf "%s-binary" (include "microservice.fullname" .)) .Values.configMaps.binaryFiles.name }}
+  labels:
+    {{- include "microservice.labels" . | nindent 4 }}
+binaryData:
+  {{- range $filename, $b64content := .Values.configMaps.binaryFiles.data }}
+  {{ $filename }}: {{ $b64content | quote }}
+  {{- end }}
+---
+{{- end }}
+{{- end }}

@@ -1,0 +1,21 @@
+{{- if and .Values.enabled .Values.service.enabled (gt (len .Values.service.ports) 0) }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "microservice.fullname" . }}-test-connection"
+  labels:
+    {{- include "microservice.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command:
+        - wget
+      args:
+        - -qO-
+        - {{ include "microservice.fullname" . }}:{{ index .Values.service.ports 0 "port" }}
+  restartPolicy: Never
+{{- end }}

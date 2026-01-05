@@ -1,0 +1,12 @@
+{{- if and .Values.enabled .Values.image.autoupdate.enabled }}
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+metadata:
+  name: {{ include "microservice.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "microservice.labels" . | nindent 4 }}
+spec:
+  image: {{ .Values.image.repository }}
+  interval: 1m
+{{- end }}

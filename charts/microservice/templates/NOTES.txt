@@ -1,0 +1,59 @@
+{{- if and .Values.enabled .Values.service.enabled }}
+
+1. Get the application URL by running these commands:
+
+{{- if eq .Values.service.type "NodePort" }}
+
+  export NODE_PORT=$(kubectl get svc --namespace {{ .Release.Namespace }} \
+    {{ include "microservice.fullname" . }} \
+    -o jsonpath="{.spec.ports[0].nodePort}")
+
+  export NODE_IP=$(kubectl get nodes \
+    -o jsonpath="{.items[0].status.addresses[0].address}")
+
+  echo "http://$NODE_IP:$NODE_PORT"
+
+{{- else if eq .Values.service.type "LoadBalancer" }}
+
+  NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+        Watch with:
+        kubectl get svc -n {{ .Release.Namespace }} -w {{ include "microservice.fullname" . }}
+
+  export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} \
+    {{ include "microservice.fullname" . }} \
+    -o jsonpath="{.status.loadBalancer.ingress[0].ip}")
+
+  echo "http://$SERVICE_IP:{{ index .Values.service.ports 0 "port" }}"
+
+{{- else if eq .Values.service.type "ClusterIP" }}
+
+  export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} \
+    -l "app.kubernetes.io/instance={{ .Release.Name }}" \
+    -o jsonpath="{.items[0].metadata.name}")
+
+  export CONTAINER_PORT=$(kubectl get pod --namespace {{ .Release.Namespace }} \
+    $POD_NAME \
+    -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
+
+  echo "Visit http://127.0.0.1:$CONTAINER_PORT"
+
+  kubectl --namespace {{ .Release.Namespace }} \
+    port-forward $POD_NAME $CONTAINER_PORT:$CONTAINER_PORT
+
+{{- end }}
+
+{{- if and .Values.ingress.enabled (gt (len .Values.ingress.hosts) 0) }}
+2. If Ingress is enabled, access the application via the defined host(s):
+{{- range .Values.ingress.hosts }}
+  Host: {{ .host }}
+  Paths:
+    {{- range .paths }}
+    - {{ .path | default "/" }}
+    {{- end }}
+{{- end }}
+
+  NOTE: Make sure an Ingress controller is installed in the cluster and 
+        ingressClassName matches the controller. The host(s) must be resolvable 
+        from your client (e.g., via /etc/hosts or DNS).
+{{- end }}
+{{- end }}

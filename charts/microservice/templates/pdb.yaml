@@ -1,0 +1,32 @@
+{{- if and .Values.enabled .Values.pdb.enabled }}
+{{- if and .Values.pdb.minAvailable .Values.pdb.maxUnavailable }}
+{{- fail "pdb.minAvailable and pdb.maxUnavailable are mutually exclusive" }}
+{{- end }}
+{{- if and (not .Values.pdb.minAvailable) (not .Values.pdb.maxUnavailable) }}
+{{- fail "pdb.enabled=true requires exactly one of pdb.minAvailable or pdb.maxUnavailable to be set" }}
+{{- end }}
+{{- $minReplicas := ternary .Values.hpa.minReplicas .Values.replicaCount .Values.hpa.enabled | int }}
+{{- if and .Values.pdb.minAvailable (ge .Values.pdb.minAvailable $minReplicas) }}
+{{- fail "pdb.minAvailable must be less than the effective replica count" }}
+{{- end }}
+{{- if gt $minReplicas 1 }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "microservice.fullname" . }}
+  labels:
+    {{- include "microservice.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "microservice.selectorLabels" . | nindent 6 }}
+  {{- if .Values.pdb.unhealthyPodEvictionPolicy }}
+  unhealthyPodEvictionPolicy: {{ .Values.pdb.unhealthyPodEvictionPolicy }}
+  {{- end }}
+  {{- if .Values.pdb.minAvailable }}
+  minAvailable: {{ .Values.pdb.minAvailable }}
+  {{- else }}
+  maxUnavailable: {{ .Values.pdb.maxUnavailable }}
+  {{- end }}
+{{- end }}
+{{- end }}

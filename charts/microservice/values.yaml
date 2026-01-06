@@ -26,11 +26,16 @@ image:
   # image.fluxImageAutoUpdate: Flux-based image automation configuration
   # When enabled, this chart will create Flux ImageRepository and ImagePolicy
   # resources to automatically track and select container image versions.
-  # This require flux to be installed on the cluster,
-  # with extra components image-reflector-controller and image-automation-controller
-  # Beside that, you need to create 
-  # flux ImageUpdateAutomation resource outside of this chart
-  # in order to allow flux to apply the update back to the git repo
+  # Requirements:
+  # - Flux must be installed in the cluster
+  # - image-reflector-controller and image-automation-controller must be enabled
+  # Notes:
+  # - You must create a Flux ImageUpdateAutomation resource outside this chart
+  #   to allow Flux to commit image updates back to the Git repository
+  # - If the image repository is private, credentials must be provided via
+  #   imagePullSecrets
+  # - Flux ImageRepository supports only ONE secret; if multiple secrets are
+  #   provided, only the FIRST item in imagePullSecrets will be used
   fluxImageAutoUpdate:
     # image.fluxImageAutoUpdate.enabled: Enable or disable Flux image auto-update support
     # If true, flux ImageRepository and ImagePolicy resources will be created.

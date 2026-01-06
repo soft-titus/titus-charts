@@ -9,4 +9,10 @@ metadata:
 spec:
   image: {{ .Values.image.repository }}
   interval: 1m
+  {{- with .Values.imagePullSecrets }}
+  {{- if gt (len .) 0 }}
+  secretRef:
+    name: {{ (index . 0).name }}
+  {{- end }}
+  {{- end }}
 {{- end }}

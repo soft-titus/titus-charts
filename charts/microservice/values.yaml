@@ -406,6 +406,54 @@ ingress:
   #       - chart-example.local
   tls: []
 
+# httpRoute: Gateway API HTTPRoute configuration
+# Used with Kubernetes Gateway API
+# Requires a Gateway and GatewayClass to already exist in the cluster.
+# This is an alternative to Ingress (do not enable both at the same time).
+httpRoute:
+  # httpRoute.enabled: Enable or disable creation of an HTTPRoute
+  enabled: false
+  # httpRoute.parentRefs: Gateways this route attaches to
+  # At least one parentRef is required
+  # Example:
+  # parentRefs:
+  #   - name: envoy-gateway
+  #     namespace: envoy-gateway-system
+  parentRefs: []
+  # httpRoute.hostnames: Optional list of hostnames
+  # Example:
+  # hostnames:
+  #   - api.example.com
+  hostnames: []
+  # httpRoute.rules: HTTP routing rules
+  # Each rule defines how incoming HTTP requests are matched and
+  # forwarded to one or more backend Services.
+  # Rule structure:
+  # - matches     : Conditions used to match requests (path, headers, etc.)
+  # - backendRefs : One or more backends that receive traffic
+  # Notes:
+  # - Rules are evaluated in order; the first matching rule is used
+  # - Traffic splitting is achieved by defining multiple backendRefs
+  #   with different weights
+  # - backendRefs.weight is relative (e.g. 90/10 == 9/1)
+  # - backendRefs.name defaults to the Service created by this chart
+  #   if not explicitly specified
+  # - backendRefs.port defaults to the first entry in service.ports
+  # Example:
+  # rules:
+  #   - matches:
+  #       - path:
+  #           type: PathPrefix
+  #           value: /
+  #     backendRefs:
+  #       - name: app-service-v1
+  #         port: 80
+  #         weight: 90
+  #       - name: app-service-v2
+  #         port: 80
+  #         weight: 10
+  rules: []
+
 # serviceAccount: ServiceAccount configuration for the microservice
 serviceAccount:
   # serviceAccount.create : Whether to create a new ServiceAccount for the release

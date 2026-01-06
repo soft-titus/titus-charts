@@ -5,9 +5,9 @@ on Kubernetes. It is designed to provide flexible configuration,
 GitOps-friendly behavior, and safe defaults.
 
 The chart deploys a Deployment and can optionally create ConfigMaps,
-ServiceAccounts, Services, Ingresses, PVCs, HPAs, and PDBs. It also
-supports Flux ImageRepository and ImagePolicy resources for automated
-image updates.
+ServiceAccounts, Services, Ingresses, HTTPRoutes, PVCs, HPAs, VPAs, and
+PDBs. It also supports Flux ImageRepository and ImagePolicy resources
+for automated image updates. 
 
 ----------------------------------------------------------------------
 ## Prerequisites
@@ -15,6 +15,7 @@ image updates.
 - Kubernetes 1.23+
 - Helm 3.x
 - Ingress controller (only if ingress is enabled)
+- Gateway API installed (only if httpRoute.enabled=true)
 - Metrics Server (only if HPA or VPA is enabled)
 - VPA (only if VPA is enabled)
 - Flux 2.7.0+ (only if image.fluxImageAutoUpdate is enabled)
@@ -113,6 +114,14 @@ The table below lists all supported values for this chart, their types, defaults
 | ingress.annotations | map | {} | Ingress annotations |
 | ingress.hosts | list | [] | Ingress host rules |
 | ingress.tls | list | [] | Ingress TLS configuration |
+| httpRoute.enabled	| bool	| false	| Enable or disable HTTPRoute creation (Gateway API) |
+| httpRoute.parentRefs	| list	| []	| Gateways to attach this route to, must provide at least one |
+| httpRoute.hostnames	| list	| []	| Optional list of hostnames for routing |
+| httpRoute.rules	| list	| []	| Ordered HTTP routing rules; each rule contains matches and backendRefs |
+| httpRoute.rules[*].matches	| list	| []	| Conditions for matching requests (path, headers, etc.) |
+| httpRoute.rules[*].backendRefs	| list	| []	| List of backends receiving traffic; supports name, port, weight, namespace |
+| httpRoute.rules[*].backendRefs.name	| string	| Chart Service by default	| Backend Service name (defaults to chart’s Service if empty) |
+| httpRoute.rules[*].backendRefs.port	| int/string	| First port in service.ports	| Backend Service port |
 | serviceAccount.create | bool | false | Create ServiceAccount |
 | serviceAccount.automount | bool | false | Automount ServiceAccount token |
 | serviceAccount.annotations | map | {} | ServiceAccount annotations |

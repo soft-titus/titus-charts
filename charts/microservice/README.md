@@ -16,6 +16,7 @@ image updates.
 - Helm 3.x
 - Ingress controller (only if ingress is enabled)
 - Metrics Server (only if HPA is enabled)
+- VPA (only if VPA is enabled)
 - Flux 2.7.0+ (only if image.fluxImageAutoUpdate is enabled)
   with the following components:
   - image-reflector-controller
@@ -87,6 +88,10 @@ The table below lists all supported values for this chart, their types, defaults
 | resources.requests.memory | string | "128Mi" | Memory request |
 | resources.limits.cpu | string | "500m" | CPU limit |
 | resources.limits.memory | string | "512Mi" | Memory limit |
+| vpa.enabled	| bool	| false	| Enable or disable Vertical Pod Autoscaler (VPA). Cannot be used with HPA on the same resource for CPU/memory. |
+| vpa.updateMode	| string	| Off	| Update mode: Off, Initial, Recreate, or InPlaceOrRecreate. Determines how recommendations are applied. |
+| vpa.minReplicas	| int	| null	| Optional safeguard: VPA will not evict pods if replicas are below this number. |
+| vpa.resourcePolicy.containerPolicies	| list	| []	| Fine-grained resource control per container. Example: min/max allowed resources, controlled resource types. |
 | replicaCount | int | 1 | Number of pod replicas |
 | deploymentStrategy.type | string | RollingUpdate | Deployment strategy (RollingUpdate, Recreate) |
 | deploymentStrategy.rollingUpdate.maxUnavailable | string/int | 0 | Max unavailable pods during update |

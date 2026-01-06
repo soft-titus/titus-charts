@@ -22,12 +22,13 @@ spec:
         {{- toYaml .matches | nindent 8 }}
       {{- end }}
       backendRefs:
-        {{- range .backendRefs }}
-        - name: {{ .name | default (include "microservice.fullname" $) }}
+        {{- $backends := default (list (dict "name" (include "microservice.fullname" $) "port" (index $.Values.service.ports 0).port)) .backendRefs }}
+        {{- range $backends }}
+        - name: {{ .name }}
           {{- if .namespace }}
           namespace: {{ .namespace }}
           {{- end }}
-          port: {{ .port | default (index $.Values.service.ports 0).port }}
+          port: {{ .port }}
           {{- if .weight }}
           weight: {{ .weight }}
           {{- end }}

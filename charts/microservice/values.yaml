@@ -247,6 +247,36 @@ resources:
     # resources.limits.memory: use "Mi" or "Gi" (e.g., "128Mi" = 128 Mebibytes)
     memory: "512Mi"
 
+# vpa: Vertical Pod Autoscaler configuration
+# NOTE:
+# - VPA requires the VPA components to be installed in the cluster
+# - VPA and HPA on CPU/memory should NOT be enabled at the same time
+vpa:
+  # vpa.enabled: Enable or disable Vertical Pod Autoscaler
+  enabled: false
+  # vpa.updateMode:
+  # - Off                 : VPA only provides recommendations
+  # - Initial             : set resources only at pod creation
+  # - Recreate            : evict pods to apply new resources
+  # - InPlaceOrRecreate   : try in-place, fallback to recreate
+  updateMode: "Off"
+  # vpa.minReplicas: Optional safeguard to prevent eviction
+  # when replica count is below this number
+  minReplicas: null
+  # vpa.resourcePolicy: Fine-grained resource control per container
+  resourcePolicy:
+    # vpa.resourcePolicy.containerPolicies:
+    # - containerName: microservice
+    #   mode: Auto
+    #   controlledValues: RequestsOnly
+    #   minAllowed:
+    #     cpu: "50m"
+    #     memory: "64Mi"
+    #   maxAllowed:
+    #     cpu: "1"
+    #     memory: "1Gi"
+    containerPolicies: []
+
 # replicaCount: Number of pod replicas to run for this microservice
 replicaCount: 1
 

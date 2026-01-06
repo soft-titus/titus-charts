@@ -1,0 +1,22 @@
+{{- if and .Values.enabled .Values.vpa.enabled }}
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: {{ include "microservice-helm-chart.fullname" . }}
+  labels:
+    {{- include "microservice-helm-chart.labels" . | nindent 4 }}
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "microservice-helm-chart.fullname" . }}
+  updatePolicy:
+    updateMode: {{ .Values.vpa.updateMode | quote }}
+    {{- if .Values.vpa.minReplicas }}
+    minReplicas: {{ .Values.vpa.minReplicas }}
+    {{- end }}
+  {{- with .Values.vpa.resourcePolicy }}
+  resourcePolicy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}

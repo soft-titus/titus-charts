@@ -101,9 +101,9 @@ spec:
           readinessProbe:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- with .Values.resources }}
+          {{- if .Values.resources }}
           resources:
-            {{- toYaml . | nindent 12 }}
+            {{- toYaml .Values.resources | nindent 12 }}
           {{- end }}
           {{- if or .Values.volumeMounts .Values.configMaps.files.enabled .Values.configMaps.binaryFiles.enabled .Values.pvc.enabled }}
           volumeMounts:

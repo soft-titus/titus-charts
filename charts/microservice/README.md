@@ -15,7 +15,7 @@ image updates.
 - Kubernetes 1.23+
 - Helm 3.x
 - Ingress controller (only if ingress is enabled)
-- Metrics Server (only if HPA is enabled)
+- Metrics Server (only if HPA or VPA is enabled)
 - VPA (only if VPA is enabled)
 - Flux 2.7.0+ (only if image.fluxImageAutoUpdate is enabled)
   with the following components:

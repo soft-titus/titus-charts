@@ -1,0 +1,46 @@
+{{- if and .Values.enabled .Values.ingressRoute.enabled }}
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ include "microservice.fullname" . }}
+  labels:
+    {{- include "microservice.labels" . | nindent 4 }}
+spec:
+  {{- with .Values.ingressRoute.entryPoints }}
+  entryPoints:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- if .Values.ingressRoute.routes }}
+  routes:
+    {{- range .Values.ingressRoute.routes }}
+    - match: {{ .match | quote }}
+      kind: {{ default "Rule" .kind }}
+      {{- if .priority }}
+      priority: {{ .priority }}
+      {{- end }}
+      {{- if .middlewares }}
+      middlewares:
+        {{- toYaml .middlewares | nindent 8 }}
+      {{- else if $.Values.ingressRoute.middlewares }}
+      middlewares:
+        {{- toYaml $.Values.ingressRoute.middlewares | nindent 8 }}
+      {{- end }}
+      services:
+        {{- $services := default (list (dict)) .services }}
+        {{- range $services }}
+        - name: {{ default (include "microservice.fullname" $) .name }}
+          port: {{ default (index $.Values.service.ports 0).port .port }}
+          {{- if .namespace }}
+          namespace: {{ .namespace }}
+          {{- end }}
+          {{- if .weight }}
+          weight: {{ .weight }}
+          {{- end }}
+        {{- end }}
+    {{- end }}
+  {{- end }}
+  {{- with .Values.ingressRoute.tls }}
+  tls:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}

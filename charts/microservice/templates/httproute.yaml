@@ -24,11 +24,11 @@ spec:
       backendRefs:
         {{- $backends := default (list (dict "name" (include "microservice.fullname" $) "port" (index $.Values.service.ports 0).port)) .backendRefs }}
         {{- range $backends }}
-        - name: {{ .name }}
+        - name: {{ default (include "microservice.fullname" $) .name }}
+          port: {{ default (index $.Values.service.ports 0).port .port }}
           {{- if .namespace }}
           namespace: {{ .namespace }}
           {{- end }}
-          port: {{ .port }}
           {{- if .weight }}
           weight: {{ .weight }}
           {{- end }}

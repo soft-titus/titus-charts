@@ -10,8 +10,8 @@ spec:
     {{- range .Values.service.ports }}
     - name: {{ .name }}
       port: {{ .port }}
-      targetPort: {{ .containerPort }}
-      protocol: {{ .protocol | upper | default "TCP" }}
+      targetPort: {{ default .port .containerPort }}
+      protocol: {{ default "TCP" .protocol | upper }}
     {{- end }}
   selector:
     {{- include "microservice.selectorLabels" . | nindent 4 }}

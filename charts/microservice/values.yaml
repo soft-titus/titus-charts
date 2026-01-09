@@ -345,9 +345,9 @@ service:
   # service.ports: list of ports exposed by the Service and container
   # Each entry maps a Service port to a container port
   #   - service.ports.*.name: Name of the port, used to bind Service port and container port (required, must be unique)
-  #   - service.ports.*.port: Service-facing port (clients connect to this)
-  #   - service.ports.*.containerPort: Container port (where the app listens)
-  #   - service.ports.*.protocol: TCP or UDP
+  #   - service.ports.*.port: Service-facing port (required, clients connect to this)
+  #   - service.ports.*.containerPort: Container port (where the app listens), default to same value as service.ports.*.port if not given
+  #   - service.ports.*.protocol: TCP or UDP, default to TCP
   ports:
     - name: http
       port: 80

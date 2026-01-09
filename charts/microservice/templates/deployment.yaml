@@ -89,8 +89,8 @@ spec:
           ports:
             {{- range .Values.service.ports }}
             - name: {{ .name }}
-              containerPort: {{ .containerPort }}
-              protocol: {{ .protocol | upper | default "TCP" }}
+              containerPort: {{ default .port .containerPort }}
+              protocol: {{ default "TCP" .protocol | upper }}
             {{- end }}
           {{- end }}
           {{- with .Values.livenessProbe }}

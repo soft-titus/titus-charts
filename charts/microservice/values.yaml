@@ -360,6 +360,7 @@ service:
 
 # ingress: Optional Ingress configuration to expose the service externally
 # Can be used to route traffic from outside the cluster to this microservice
+# DO NOT enable more than one of ingress / ingressRoute / httpRoute.
 # NOTE:
 # - Ingress requires an Ingress controller to be installed in the cluster (e.g., nginx, traefik).
 # - ingress.ingressClassName must match the class provided by the installed controller.
@@ -406,10 +407,67 @@ ingress:
   #       - chart-example.local
   tls: []
 
+# ingressRoute: Traefik IngressRoute (CRD) configuration
+# Used when Traefik is installed with CRDs enabled.
+# DO NOT enable more than one of ingress / ingressRoute / httpRoute.
+ingressRoute:
+  # ingressRoute.enabled: Enable or disable creation of an IngressRoute
+  enabled: false
+  # ingressRoute.entryPoints: Traefik entryPoints to bind to
+  # Common values: web, websecure
+  # At least one entryPoint is required
+  entryPoints:
+    - web
+  # ingressRoute.routes: Routing rules
+  # Each route defines how incoming requests are matched and forwarded.
+  # Route structure:
+  # - match     : Traefik match rule (Host, PathPrefix, Headers, etc.)
+  # - kind      : Rule kind (usually "Rule")
+  # - priority  : Optional route priority
+  #               - Higher value = higher precedence
+  #               - Evaluated before routes with lower priority
+  #               - Recommended when multiple routes can match the same request
+  # - services  : One or more backend services
+  # Notes:
+  # - Routes are evaluated by priority first, then by rule specificity
+  # - Multiple services enable traffic splitting via weight
+  # - service.weight is relative (e.g. 90/10 == 9/1)
+  # - service.name defaults to the Service created by this chart if empty
+  # - service.port defaults to the first entry in service.ports
+  # Example:
+  # routes:
+  #   - match: Host(`api.example.com`) && PathPrefix(`/admin`)
+  #     kind: Rule
+  #     priority: 20
+  #     services:
+  #       - name: ""
+  #         port: http
+  #         weight: 100
+  #   - match: Host(`api.example.com`) && PathPrefix(`/`)
+  #     kind: Rule
+  #     priority: 10
+  #     services:
+  #       - name: ""
+  #         port: http
+  routes: []
+  # ingressRoute.middlewares: Optional middlewares applied to ALL routes
+  # Each entry references an existing Traefik Middleware CR
+  # Example:
+  # middlewares:
+  #   - name: rate-limit
+  #     namespace: traefik
+  middlewares: []
+  # ingressRoute.tls: TLS configuration
+  # When set, Traefik will terminate TLS for this IngressRoute
+  # Example:
+  # tls:
+  #   secretName: api-example-tls
+  tls: {}
+
 # httpRoute: Gateway API HTTPRoute configuration
 # Used with Kubernetes Gateway API
 # Requires a Gateway and GatewayClass to already exist in the cluster.
-# This is an alternative to Ingress (do not enable both at the same time).
+# DO NOT enable more than one of ingress / ingressRoute / httpRoute.
 httpRoute:
   # httpRoute.enabled: Enable or disable creation of an HTTPRoute
   enabled: false

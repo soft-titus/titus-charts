@@ -1,0 +1,27 @@
+{{- if and .Values.enabled .Values.image.argocdImageUpdater.enabled }}
+{{- $cfg := .Values.image.argocdImageUpdater }}
+{{- $appNamePattern := default (include "microservice.fullname" .) $cfg.applicationNamePattern }}
+{{- $argocdNs := default "argocd" $cfg.applicationNamespace }}
+{{- $method := default "argocd" $cfg.writeBackConfig.method }}
+apiVersion: argocd-image-updater.argoproj.io/v1alpha1
+kind: ImageUpdater
+metadata:
+  name: {{ include "microservice.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "microservice.labels" . | nindent 4 }}
+spec:
+  namespace: {{ $argocdNs | quote }}
+  applicationRefs:
+    - namePattern: {{ $appNamePattern | quote }}
+      {{- with $cfg.images }}
+      images:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      writeBackConfig:
+        method: {{ $method | quote }}
+        {{- with $cfg.writeBackConfig.gitConfig }}
+        gitConfig:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+{{- end }}

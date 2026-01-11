@@ -6,8 +6,9 @@ GitOps-friendly behavior, and safe defaults.
 
 The chart deploys a Deployment and can optionally create ConfigMaps,
 ServiceAccounts, Services, Ingresses, HTTPRoutes, PVCs, HPAs, VPAs, and
-PDBs. It also supports Flux ImageRepository and ImagePolicy resources
-for automated image updates. 
+PDBs. It also supports automated container image updates via Flux Image Automation
+or Argo CD Image Updater, allowing image tags to be updated declaratively
+and safely through GitOps workflows.
 
 ----------------------------------------------------------------------
 ## Prerequisites
@@ -22,7 +23,7 @@ for automated image updates.
   with the following components:
   - image-reflector-controller
   - image-automation-controller
-
+- ArgoCD + ArgoCD Image Updater (only if image.argocdImageUpdater is enabled)
 ----------------------------------------------------------------------
 ## Usage
 
@@ -61,6 +62,12 @@ The table below lists all supported values for this chart, their types, defaults
 | image.fluxImageAutoUpdate.enabled	| bool	| false	| Enable Flux-based image auto-update (creates ImageRepository and ImagePolicy) |
 | image.fluxImageAutoUpdate.pattern	| string	| "^[1-9]+\\.[0-9]+\\.[0-9]+$"	| Regex pattern used to filter image tags (must match SemVer if semver is set) |
 | image.fluxImageAutoUpdate.semver	| string	| ">=1.0.0 <2.0.0"	| SemVer range used by Flux ImagePolicy to select the latest image |
+| image.argocdImageUpdater.enabled	| bool	| false	| Enable Argo CD Image Updater support |
+| image.argocdImageUpdater.applicationNamespace	| string	| argocd	| Namespace where Argo CD Applications are deployed |
+| image.argocdImageUpdater.applicationNamePattern	| string	| ""	| Target Application name or glob pattern (defaults to release fullname) |
+| image.argocdImageUpdater.images	| list	| []	| List of images managed by Argo CD Image Updater |
+| image.argocdImageUpdater.writeBackConfig.method	| string	| argocd	| Write-back method: argocd or git |
+| image.argocdImageUpdater.writeBackConfig.gitConfig	| map	| {}	| Git write-back configuration |
 | imagePullSecrets | list | [] | Secrets for pulling images from private registries |
 | command | list | [] | Override container entrypoint |
 | args | list | [] | Override container command arguments |

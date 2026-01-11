@@ -46,6 +46,43 @@ image:
     # image.fluxImageAutoUpdate.semver: SemVer range used to select the latest image tag
     # Takes effect only when tags follow semantic versioning.
     semver: ">=1.0.0 <2.0.0"
+  # image.argocdImageUpdater: ArgoCD Image Updater configuration
+  # Enables automatic container image updates for ArgoCD applications
+  # Requires ArgoCD and ArgoCD Image Updater to be installed in the cluster
+  argocdImageUpdater:
+    # image.argocdImageUpdater.enabled: Enable or disable ArgoCD Image Updater support
+    enabled: false
+    # image.argocdImageUpdater.applicationNamespace: Namespace where the ArgoCD Application exists
+    # Defaults to "argocd" if not specified
+    applicationNamespace: "argocd"
+    # image.argocdImageUpdater.applicationNamePattern: Target ArgoCD Application name or pattern
+    # Can be an exact name or a glob pattern (e.g. "hello-*")
+    # Defaults to the release fullname if not specified
+    applicationNamePattern: ""
+    # image.argocdImageUpdater.images: List of images managed by ArgoCD Image Updater
+    # Example:
+    # images:
+    #   - alias: "app"
+    #     imageName: ghcr.io/soft-titus/hello
+    #     updateStrategy: "semver"
+    #     allowTags: "regexp:^1\\.[0-9]+\\.[0-9]+$"
+    #     forceUpdate: true
+    #     manifestTargets:
+    #       helm:
+    #         name: "image.repository"
+    #         tag: "image.tag"
+    images: []
+    # image.argocdImageUpdater.writeBackConfig: Controls how updated image values are written back
+    writeBackConfig:
+      # image.argocdImageUpdater.writeBackConfig.method: Method used to update image values
+      # Possible values are "argocd" (default) or "git"
+      method: "argocd"
+      # image.argocdImageUpdater.writeBackConfig.gitConfig: Git configuration for write-back
+      # Only applicable when image.argocdImageUpdater.writeBackConfig.method is "git"
+      # Example:
+      # gitConfig:
+      #   writeBackTarget: "helmvalues:/values.yaml"
+      gitConfig: {}
 
 # imagePullSecrets: Optional: secrets for pulling images from private registries
 # Provide names of Kubernetes secrets containing credentials

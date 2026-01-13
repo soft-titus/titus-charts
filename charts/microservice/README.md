@@ -19,6 +19,7 @@ and safely through GitOps workflows.
 - Gateway API installed (only if httpRoute.enabled=true)
 - Metrics Server (only if HPA or VPA is enabled)
 - VPA (only if VPA is enabled)
+- KEDA 2.x (only if scaledObject.enabled=true)
 - Flux 2.7.0+ (only if image.fluxImageAutoUpdate is enabled)
   with the following components:
   - image-reflector-controller
@@ -109,6 +110,15 @@ The table below lists all supported values for this chart, their types, defaults
 | hpa.maxReplicas | int | 10 | Maximum replicas for HPA |
 | hpa.targetCPUUtilizationPercentage | int | 80* | Target CPU utilization (*default behavior) |
 | hpa.targetMemoryUtilizationPercentage | int | null | Target memory utilization |
+| scaledObject.enabled | bool | false | Enable KEDA ScaledObject autoscaling |
+| scaledObject.minReplicas | int | 1 | Minimum number of replicas for KEDA scaling |
+| scaledObject.maxReplicas | int | 10 | Maximum number of replicas for KEDA scaling |
+| scaledObject.pollingInterval | int | 30 | How often KEDA polls metrics (seconds) |
+| scaledObject.cooldownPeriod | int | 300 | Cooldown period before scaling down (seconds) |
+| scaledObject.triggers | list | [] | List of KEDA triggers (maps directly to KEDA scaler spec; all numeric values must be strings) |
+| triggerAuthentication.enabled | bool | false | Create a KEDA TriggerAuthentication resource |
+| triggerAuthentication.name | string | "" | Name of TriggerAuthentication (defaults to release fullname if empty) |
+| triggerAuthentication.secretTargetRef | list | [] | Map Kubernetes Secrets to scaler parameters for authentication |
 | pdb.enabled | bool | false | Enable PodDisruptionBudget |
 | pdb.unhealthyPodEvictionPolicy | string | IfHealthyBudget | PDB eviction behavior |
 | pdb.minAvailable | string/int | null | Minimum available pods |

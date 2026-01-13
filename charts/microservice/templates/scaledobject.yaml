@@ -1,0 +1,21 @@
+{{- if and .Values.enabled .Values.scaledObject.enabled }}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ include "microservice.fullname" . }}
+  labels:
+    {{- include "microservice.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    name: {{ include "microservice.fullname" . }}
+  minReplicaCount: {{ .Values.scaledObject.minReplicas }}
+  maxReplicaCount: {{ .Values.scaledObject.maxReplicas }}
+  {{- if .Values.scaledObject.pollingInterval }}
+  pollingInterval: {{ .Values.scaledObject.pollingInterval }}
+  {{- end }}
+  {{- if .Values.scaledObject.cooldownPeriod }}
+  cooldownPeriod: {{ .Values.scaledObject.cooldownPeriod }}
+  {{- end }}
+  triggers:
+    {{- toYaml .Values.scaledObject.triggers | nindent 4 }}
+{{- end }}

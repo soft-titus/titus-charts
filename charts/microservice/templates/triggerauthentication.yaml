@@ -1,0 +1,13 @@
+{{- if and .Values.enabled .Values.triggerAuthentication.enabled }}
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: {{ default (include "microservice.fullname" .) .Values.triggerAuthentication.name }}
+  labels:
+    {{- include "microservice.labels" . | nindent 4 }}
+spec:
+  {{- if .Values.triggerAuthentication.secretTargetRef }}
+  secretTargetRef:
+    {{- toYaml .Values.triggerAuthentication.secretTargetRef | nindent 4 }}
+  {{- end }}
+{{- end }}

@@ -285,9 +285,8 @@ resources:
     memory: "512Mi"
 
 # vpa: Vertical Pod Autoscaler configuration
-# NOTE:
-# - VPA requires the VPA components to be installed in the cluster
-# - VPA and HPA on CPU/memory should NOT be enabled at the same time
+# VPA requires the VPA components to be installed in the cluster
+# DO NOT enable more than one of hpa / vpa / scaledObject.
 vpa:
   # vpa.enabled: Enable or disable Vertical Pod Autoscaler
   enabled: false
@@ -336,6 +335,7 @@ deploymentStrategy:
 
 # hpa: Horizontal Pod Autoscaler configuration
 # require metrics server to be install on the kubernetes cluster
+# DO NOT enable more than one of hpa / vpa / scaledObject.
 hpa:
   # hpa.enabled: Enable or disable HPA
   enabled: false
@@ -349,6 +349,51 @@ hpa:
   # if none provided then the default behaviour is targetCPUUtilizationPercentage=80
   # targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 75
+
+# scaledObject: KEDA ScaledObject autoscaling configuration
+# Requires KEDA to be installed in the cluster
+# DO NOT enable more than one of hpa / vpa / scaledObject.
+scaledObject:
+  # scaledObject.enabled: Enable or disable KEDA ScaledObject
+  enabled: false
+  # scaledObject.minReplicas: Minimum number of replicas
+  minReplicas: 1
+  # scaledObject.maxReplicas: Maximum number of replicas
+  maxReplicas: 10
+  # scaledObject.pollingInterval: How often KEDA checks metrics (seconds)
+  pollingInterval: 30
+  # scaledObject.cooldownPeriod: Cooldown period before scaling down (seconds)
+  cooldownPeriod: 300
+  # scaledObject.triggers: List of KEDA triggers
+  # Each trigger maps directly to a KEDA scaler
+  # All numeric values MUST be strings
+  # Example:
+  # triggers:
+  #   - type: redis
+  #     metadata:
+  #       address: redis.default.svc.cluster.local:6379
+  #       listName: my-queue
+  #       listLength: "5"
+  #     authenticationRef:
+  #       - name: redis-auth
+  triggers: []
+
+# triggerAuthentication: KEDA TriggerAuthentication configuration
+# can be use as reference for scaledObject.triggers.*.authenticationRef
+triggerAuthentication:
+  # triggerAuthentication.enabled: Create TriggerAuthentication
+  enabled: false
+  # triggerAuthentication.name: Name of TriggerAuthentication
+  # Defaults to the release fullname if not specified
+  name: ""
+  # triggerAuthentication.secretTargetRef:
+  # Maps secrets to scaler parameters
+  # Example:
+  # secretTargetRef:
+  #   - parameter: password
+  #     name: redis-secret
+  #     key: password
+  secretTargetRef: []
 
 # pdb: PodDisruptionBudget configuration
 # Controls how many pods can be voluntarily disrupted at once

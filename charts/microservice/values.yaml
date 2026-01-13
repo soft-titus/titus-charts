@@ -440,6 +440,17 @@ service:
       containerPort: 9090
       protocol: TCP
 
+# serviceMonitor: Prometheus Operator ServiceMonitor configuration
+# Requires Prometheus Operator (kube-prometheus-stack)
+serviceMonitor:
+  # serviceMonitor.enabled: Enable or disable ServiceMonitor creation
+  enabled: false
+  # serviceMonitor.port: Service port name to scrape
+  # MUST match service.ports[].name
+  port: metrics
+  # serviceMonitor.path: HTTP path for metrics
+  path: /metrics
+
 # ingress: Optional Ingress configuration to expose the service externally
 # Can be used to route traffic from outside the cluster to this microservice
 # DO NOT enable more than one of ingress / ingressRoute / httpRoute.

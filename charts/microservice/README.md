@@ -5,9 +5,11 @@ on Kubernetes. It is designed to provide flexible configuration,
 GitOps-friendly behavior, and safe defaults.
 
 The chart deploys a Deployment and can optionally create ConfigMaps,
-ServiceAccounts, Services, Ingresses, HTTPRoutes, PVCs, HPAs, VPAs, and
-PDBs. It also supports automated container image updates via Flux Image Automation
-or Argo CD Image Updater, allowing image tags to be updated declaratively
+ServiceAccounts, Services, Ingresses, HTTPRoutes, PVCs, HPAs, VPAs,
+KEDA ScaledObjects, TriggerAuthentications, ServiceMonitors, and PDBs.
+
+Automated container image updates are supported via Flux Image Automation
+or Argo CD Image Updater, enabling image tags to be updated declaratively
 and safely through GitOps workflows.
 
 ----------------------------------------------------------------------
@@ -20,6 +22,7 @@ and safely through GitOps workflows.
 - Metrics Server (only if HPA or VPA is enabled)
 - VPA (only if VPA is enabled)
 - KEDA 2.x (only if scaledObject.enabled=true)
+- kube-prometheus-stack (only if serviceMonitor.enabled=true)
 - Flux 2.7.0+ (only if image.fluxImageAutoUpdate is enabled)
   with the following components:
   - image-reflector-controller
@@ -126,6 +129,9 @@ The table below lists all supported values for this chart, their types, defaults
 | service.enabled | bool | true | Create Service resource |
 | service.type | string | ClusterIP | Service type |
 | service.ports | list | [] | Service and container ports mapping |
+| serviceMonitor.enabled	| bool	| false	| Enable Prometheus Operator ServiceMonitor to scrape metrics |
+| serviceMonitor.port	| string	| metrics	| Service port name to scrape |
+| serviceMonitor.path	| string	| /metrics	| HTTP path to scrape metrics from |
 | ingress.enabled | bool | false | Enable Ingress |
 | ingress.ingressClassName | string | "" | IngressClass name |
 | ingress.annotations | map | {} | Ingress annotations |

@@ -445,6 +445,16 @@ service:
 serviceMonitor:
   # serviceMonitor.enabled: Enable or disable ServiceMonitor creation
   enabled: false
+  # serviceMonitor.labels: Additional labels to attach to the ServiceMonitor
+  # This is useful for controlling which ServiceMonitors Prometheus scrapes.
+  # Examples:
+  #   - release: prometheus-stack   # match PrometheusOperator release label
+  #   - environment: dev            # optional environment label
+  # Notes:
+  # - Labels here are merged with the default Helm chart labels
+  # - Prometheus will only scrape ServiceMonitors that match its
+  #   `serviceMonitorSelector` in the Prometheus CR
+  labels: {}
   # serviceMonitor.port: Service port name to scrape
   # MUST match service.ports[].name
   port: metrics

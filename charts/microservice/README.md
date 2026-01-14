@@ -130,6 +130,7 @@ The table below lists all supported values for this chart, their types, defaults
 | service.type | string | ClusterIP | Service type |
 | service.ports | list | [] | Service and container ports mapping |
 | serviceMonitor.enabled	| bool	| false	| Enable Prometheus Operator ServiceMonitor to scrape metrics |
+| serviceMonitor.labels	| map	| {}	| Additional labels to attach to the ServiceMonitor |
 | serviceMonitor.port	| string	| metrics	| Service port name to scrape |
 | serviceMonitor.path	| string	| /metrics	| HTTP path to scrape metrics from |
 | ingress.enabled | bool | false | Enable Ingress |

@@ -3,6 +3,15 @@ entries:
   microservice:
   - apiVersion: v2
     appVersion: 0.0.1
+    created: "2026-01-14T00:34:36.63634646Z"
+    digest: 8fe78cc6ae382f66b1de25a4872e6544bb0ef2ca1c81ded3b229e85bfe0fbf7e
+    name: microservice
+    type: application
+    urls:
+    - https://github.com/soft-titus/titus-charts/releases/download/microservice-0.6.1/microservice-0.6.1.tgz
+    version: 0.6.1
+  - apiVersion: v2
+    appVersion: 0.0.1
     created: "2026-01-13T15:24:09.447941687Z"
     digest: c828352e1a0bd30a88b2715f759145b9aa0952884b0045e7c96a62d1f00d29fa
     name: microservice
@@ -154,4 +163,4 @@ entries:
     urls:
     - https://github.com/soft-titus/titus-charts/releases/download/microservice-0.0.1/microservice-0.0.1.tgz
     version: 0.0.1
-generated: "2026-01-13T15:24:09.448067491Z"
+generated: "2026-01-14T00:34:36.636478775Z"

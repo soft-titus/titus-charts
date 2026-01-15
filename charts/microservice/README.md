@@ -64,6 +64,7 @@ The table below lists all supported values for this chart, their types, defaults
 | image.tag | string | "1.0.0" | Container image tag |
 | image.pullPolicy | string | IfNotPresent | Image pull policy: Always, IfNotPresent, Never |
 | image.fluxImageAutoUpdate.enabled	| bool	| false	| Enable Flux-based image auto-update (creates ImageRepository and ImagePolicy) |
+| image.fluxImageAutoUpdate.namespace | string | flux-system | Namespace where Flux ImageRepository and ImagePolicy are created. |
 | image.fluxImageAutoUpdate.pattern	| string	| "^[1-9]+\\.[0-9]+\\.[0-9]+$"	| Regex pattern used to filter image tags (must match SemVer if semver is set) |
 | image.fluxImageAutoUpdate.semver	| string	| ">=1.0.0 <2.0.0"	| SemVer range used by Flux ImagePolicy to select the latest image |
 | image.argocdImageUpdater.enabled	| bool	| false	| Enable Argo CD Image Updater support |

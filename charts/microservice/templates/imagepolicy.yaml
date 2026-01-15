@@ -3,7 +3,7 @@ apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImagePolicy
 metadata:
   name: {{ include "microservice.fullname" . }}
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.image.fluxImageAutoUpdate.namespace | quote }}
   labels:
     {{- include "microservice.labels" . | nindent 4 }}
 spec:

@@ -1,0 +1,27 @@
+{{- if and .Values.enabled (or .Values.job.enabled .Values.cronJob.enabled) .Values.jobTemplate.image.argocdImageUpdater.enabled }}
+{{- $cfg := .Values.jobTemplate.image.argocdImageUpdater }}
+{{- $appNamePattern := default (include "job.fullname" .) $cfg.applicationNamePattern }}
+{{- $argocdNs := default "argocd" $cfg.applicationNamespace }}
+{{- $method := default "argocd" $cfg.writeBackConfig.method }}
+apiVersion: argocd-image-updater.argoproj.io/v1alpha1
+kind: ImageUpdater
+metadata:
+  name: {{ include "job.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "job.labels" . | nindent 4 }}
+spec:
+  namespace: {{ $argocdNs | quote }}
+  applicationRefs:
+    - namePattern: {{ $appNamePattern | quote }}
+      {{- with $cfg.images }}
+      images:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      writeBackConfig:
+        method: {{ $method | quote }}
+        {{- with $cfg.writeBackConfig.gitConfig }}
+        gitConfig:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+{{- end }}

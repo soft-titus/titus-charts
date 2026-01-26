@@ -1,0 +1,397 @@
+# Default values for job Helm chart
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# enabled: Master switch for this chart
+# Set to false to prevent all resources from being rendered.
+# Useful for GitOps (e.g. Flux) when disabling a release without deleting it.
+enabled: true
+
+# nameOverride: Override the chart name used in templates.
+# Useful if you want to deploy the chart with a different base name.
+nameOverride: ""
+
+# fullnameOverride: Override the full resource name for all generated Kubernetes objects.
+# This completely replaces the default release + chart naming.
+fullnameOverride: ""
+
+# job: Job resource
+job:
+  # job.enabled: Enable or disable creation of Job resource
+  enabled: true
+
+# cronJob: Configuration for Kubernetes CronJob resource
+cronJob:
+  # cronJob.enabled: Enable or disable creation of the CronJob
+  enabled: true
+  # cronJob.suspend: Suspend all future executions without deleting the CronJob
+  suspend: false
+  # cronJob.schedule: Cron schedule expression for running the job
+  # Example: "0 0 * * *" run daily at midnight
+  schedule: "0 0 * * *"
+  # cronJob.concurrencyPolicy: How to handle concurrent executions
+  # Allow   : allow concurrent jobs
+  # Forbid  : skip new job if previous is still running
+  # Replace : replace currently running job with a new one
+  concurrencyPolicy: "Allow"
+  # cronJob.failedJobsHistoryLimit: Number of failed finished jobs to keep
+  failedJobsHistoryLimit: 1
+  # cronJob.successfulJobsHistoryLimit: Number of successful finished jobs to keep
+  successfulJobsHistoryLimit: 3
+
+# jobTemplate: Shared Job specification used by both Job and CronJob
+# This defines the common Kubernetes Job spec that will be applied to:
+# - the standalone Job (when job.enabled=true)
+# - the CronJob's jobTemplate (when cronJob.enabled=true)
+# Any change here affects both resources.
+jobTemplate:
+  # jobTemplate.activeDeadlineSeconds: Maximum duration (in seconds)
+  # the job is allowed to run before it is terminated
+  activeDeadlineSeconds: 900
+  # jobTemplate.backoffLimit: Number of retries before the job is marked as failed
+  backoffLimit: 6
+  # jobTemplate.ttlSecondsAfterFinished: Time (in seconds) to retain
+  # completed Job resources before automatic cleanup
+  ttlSecondsAfterFinished: 86400
+  # jobTemplate.image: Docker image settings for the job
+  image:
+    # jobTemplate.image.repository: container image location
+    repository: public.ecr.aws/docker/library/busybox
+    # jobTemplate.image.tag: version of the image to deploy
+    tag: "1.37.0"
+    # jobTemplate.image.pullPolicy: when to pull the image (Always, IfNotPresent, Never)
+    pullPolicy: IfNotPresent
+    # jobTemplate.image.fluxImageAutoUpdate: Flux-based image automation configuration
+    # When enabled, this chart will create Flux ImageRepository and ImagePolicy
+    # resources to automatically track and select container image versions.
+    # Requirements:
+    # - Flux must be installed in the cluster
+    # - image-reflector-controller and image-automation-controller must be enabled
+    # Notes:
+    # - You must create a Flux ImageUpdateAutomation resource outside this chart
+    #   to allow Flux to commit image updates back to the Git repository
+    # - If the image repository is private, credentials must be provided via
+    #   jobTemplate.imagePullSecrets
+    # - Flux ImageRepository supports only ONE secret; if multiple secrets are
+    #   provided, only the FIRST item in jobTemplate.imagePullSecrets will be used
+    fluxImageAutoUpdate:
+      # jobTemplate.image.fluxImageAutoUpdate.enabled: Enable or disable Flux image auto-update support
+      # If true, flux ImageRepository and ImagePolicy resources will be created.
+      enabled: false
+      # jobTemplate.image.fluxImageAutoUpdate.namespace: Kubernetes namespace where the Flux ImageRepository
+      # and ImagePolicy resources will be created.
+      # IMPORTANT:
+      # - This MUST be the same namespace as the ImageUpdateAutomation resource.
+      # - Flux Image Automation only resolves ImagePolicy objects in the same namespace.
+      # This value is rendered into the "$imagepolicy" setter comment so Flux knows
+      # exactly which ImagePolicy to use when updating jobTemplate.image.tag in Git.
+      namespace: flux-system
+      # jobTemplate.image.fluxImageAutoUpdate.pattern: Regex pattern used to filter image tags
+      # Only tags matching this pattern will be considered by the ImagePolicy.
+      pattern: "^[1-9]+\\.[0-9]+\\.[0-9]+$"
+      # jobTemplate.image.fluxImageAutoUpdate.semver: SemVer range used to select the latest image tag
+      # Takes effect only when tags follow semantic versioning.
+      semver: ">=1.0.0 <2.0.0"
+    # jobTemplate.image.argocdImageUpdater: ArgoCD Image Updater configuration
+    # Enables automatic container image updates for ArgoCD applications
+    # Requires ArgoCD and ArgoCD Image Updater to be installed in the cluster
+    argocdImageUpdater:
+      # jobTemplate.image.argocdImageUpdater.enabled: Enable or disable ArgoCD Image Updater support
+      enabled: false
+      # jobTemplate.image.argocdImageUpdater.applicationNamespace: Namespace where the ArgoCD Application exists
+      # Defaults to "argocd" if not specified
+      applicationNamespace: "argocd"
+      # jobTemplate.image.argocdImageUpdater.applicationNamePattern: Target ArgoCD Application name or pattern
+      # Can be an exact name or a glob pattern (e.g. "hello-*")
+      # Defaults to the release fullname if not specified
+      applicationNamePattern: ""
+      # jobTemplate.image.argocdImageUpdater.images: List of images managed by ArgoCD Image Updater
+      # Example:
+      # images:
+      #   - alias: "app"
+      #     imageName: public.ecr.aws/docker/library/busybox
+      #     updateStrategy: "semver"
+      #     allowTags: "regexp:^1\\.[0-9]+\\.[0-9]+$"
+      #     forceUpdate: true
+      #     manifestTargets:
+      #       helm:
+      #         name: "jobTemplate.image.repository"
+      #         tag: "jobTemplate.image.tag"
+      images: []
+      # jobTemplate.image.argocdImageUpdater.writeBackConfig: Controls how updated image values are written back
+      writeBackConfig:
+        # jobTemplate.image.argocdImageUpdater.writeBackConfig.method: Method used to update image values
+        # Possible values are "argocd" (default) or "git"
+        method: "argocd"
+        # jobTemplate.image.argocdImageUpdater.writeBackConfig.gitConfig: Git configuration for write-back
+        # Only applicable when jobTemplate.image.argocdImageUpdater.writeBackConfig.method is "git"
+        # Example:
+        # gitConfig:
+        #   writeBackTarget: "helmvalues:/values.yaml"
+        gitConfig: {}
+
+  # jobTemplate.imagePullSecrets: Optional: secrets for pulling images from private registries
+  # Provide names of Kubernetes secrets containing credentials
+  # Example:
+  # imagePullSecrets:
+  #   - name: docker-secrets
+  imagePullSecrets: []
+  # jobTemplate.command: Override the container entrypoint.
+  # This maps to Kubernetes container.command.
+  # If empty, the image's ENTRYPOINT will be used.
+  # Example:
+  # command:
+  #   - "/app/migrate"
+  command: []
+  # jobTemplate.args: Override the container command arguments.
+  # This maps to Kubernetes container.args.
+  # If empty, the image's CMD will be used.
+  # Example:
+  # args:
+  #   - "--env=prod"
+  #   - "--timeout=300"
+  args: []
+  # jobTemplate.env: Environment variables for the container
+  # Supports both direct values and valueFrom (Secret / ConfigMap)
+  # Example:
+  # env:
+  #   - name: LOG_LEVEL
+  #     value: info
+  #   - name: DATABASE_PASSWORD
+  #     valueFrom:
+  #       secretKeyRef:
+  #         name: db-credentials
+  #         key: password
+  #   - name: DATABASE_HOST
+  #     valueFrom:
+  #       configMapKeyRef:
+  #         name: db-config
+  #         key: host
+  env: []
+  # jobTemplate.envFrom: Import environment variables from all keys in a Secret or ConfigMap
+  # Each key becomes an environment variable in the container
+  # Example:
+  # envFrom:
+  #   - secretRef:
+  #       name: app-secrets
+  #   - configMapRef:
+  #       name: app-config
+  envFrom: []
+  # jobTemplate.configMaps: Define ConfigMaps managed by this chart
+  # This chart supports three different ConfigMap use cases:
+  #   1. env          : Key/value pairs exposed as environment variables
+  #   2. files        : Text-based configuration files mounted into the container
+  #   3. binaryFiles  : Binary data (e.g. logo, image) mounted as files
+  # Each section can be enabled independently and will result in a separate
+  # ConfigMap being created and mounted or injected accordingly.
+  # Notes:
+  # - env ConfigMap is typically consumed via envFrom in the Job
+  # - files and binaryFiles ConfigMaps are mounted as volumes
+  # - data keys represent filenames when mounted as files
+  # - binaryFiles data values must be base64-encoded
+  configMaps:
+    # jobTemplate.configMaps.env: ConfigMap for environment variables
+    # All keys in data will be injected as environment variables
+    env:
+      # jobTemplate.configMaps.env.enabled: Enable or disable env ConfigMap
+      enabled: false
+      # jobTemplate.configMaps.env.name: Name of the ConfigMap
+      # If empty, a name will be generated from the release fullname
+      name: ""
+      # jobTemplate.configMaps.env.data: Key/value pairs for environment variables
+      # Example:
+      # data:
+      #   LOG_LEVEL: "INFO"
+      #   RUN_MODE: "batch"
+      #   RETRY_LIMIT: "5"
+      data: {}
+    # jobTemplate.configMaps.files: ConfigMap for text-based configuration files
+    # Each key in data becomes a file mounted at mountPath
+    files:
+      # jobTemplate.configMaps.files.enabled: Enable or disable files ConfigMap
+      enabled: false
+      # jobTemplate.configMaps.files.name: Name of the ConfigMap
+      # If empty, a name will be generated from the release fullname
+      name: ""
+      # jobTemplate.configMaps.files.mountPath: Path inside the container where files are mounted
+      mountPath: /app/config
+      # jobTemplate.configMaps.files.data: File contents (supports multi-line values)
+      # Example:
+      # data:
+      #   config.yaml: |
+      #     input:
+      #       source: s3
+      #       bucket: my-bucket
+      #     output:
+      #       format: json
+      data: {}
+    # jobTemplate.configMaps.binaryFiles: ConfigMap for binary file data
+    # Intended for non-sensitive binary files, e.g. logo, image, etc.
+    binaryFiles:
+      # jobTemplate.configMaps.binaryFiles.enabled: Enable or disable binaryFiles ConfigMap
+      enabled: false
+      # jobTemplate.configMaps.binaryFiles.name: Name of the ConfigMap
+      # If empty, a name will be generated from the release fullname
+      name: ""
+      # jobTemplate.configMaps.binaryFiles.mountPath: Path inside the container where binary files are mounted
+      mountPath: /app/binary
+      # jobTemplate.configMaps.binaryFiles.data: Base64-encoded binary file contents
+      # Example:
+      # data:
+      #   logo.png: <base64-encoded-png-image>
+      data: {}
+  # jobTemplate.resources: Container resource requests and limits
+  # Controls CPU and memory usage for the container.
+  resources:
+    # jobTemplate.resources.requests: minimum resources guaranteed to the container.
+    requests:
+      # jobTemplate.resources.requests.cpu: use "m" for millicores (e.g., "100m" = 0.1 CPU)
+      cpu: "100m"
+      # jobTemplate.resources.requests.memory: use "Mi" or "Gi" (e.g., "128Mi" = 128 Mebibytes)
+      memory: "128Mi"
+    # jobTemplate.resources.limits: maximum resources the container can use.
+    limits:
+      # jobTemplate.resources.limits.cpu: use "m" for millicores (e.g., "100m" = 0.1 CPU)
+      cpu: "500m"
+      # jobTemplate.resources.limits.memory: use "Mi" or "Gi" (e.g., "128Mi" = 128 Mebibytes)
+      memory: "512Mi"
+  # jobTemplate.serviceAccount: ServiceAccount configuration for the job
+  serviceAccount:
+    # jobTemplate.serviceAccount.create : Whether to create a new ServiceAccount for the release
+    create: false
+    # jobTemplate.serviceAccount.automount: Whether to automatically mount the ServiceAccount token into pods
+    automount: false
+    # jobTemplate.serviceAccount.annotations: Annotations to add to the ServiceAccount (optional)
+    # Example:
+    # annotations:
+    #   eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/my-job-role
+    annotations: {}
+    # jobTemplate.serviceAccount.name: Name of the ServiceAccount to use.
+    # If empty and `create: true`, a name will be generated from fullname template
+    name: ""
+  # jobTemplate.podAnnotations: Annotations to add to all pods created by this release
+  # Example:
+  # podAnnotations:
+  #   cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
+  podAnnotations: {}
+  # jobTemplate.podLabels: Labels to add to all pods created by this release
+  # Example:
+  # podLabels:
+  #   app.kubernetes.io/component: batch
+  #   app.kubernetes.io/part-of: data-pipeline
+  podLabels: {}
+  # jobTemplate.podSecurityContext: Pod-level security settings
+  # Example:
+  # podSecurityContext:
+  #   runAsUser: 1000
+  #   runAsGroup: 3000
+  #   fsGroup: 2000
+  #   seccompProfile:
+  #     type: RuntimeDefault
+  podSecurityContext: {}
+  # jobTemplate.securityContext: Container-level security settings
+  # These settings apply to individual containers and can override podSecurityContext.
+  # Example:
+  # securityContext:
+  #   runAsNonRoot: true
+  #   allowPrivilegeEscalation: false
+  #   readOnlyRootFilesystem: true
+  #   capabilities:
+  #     drop:
+  #       - ALL
+  securityContext: {}
+
+  # jobTemplate.volumes: Define additional Kubernetes volumes to mount into the pods
+  # Useful for ConfigMaps, Secrets, or emptyDirs
+  # Example:
+  # volumes:
+  #   - name: config-volume
+  #     configMap:
+  #       name: my-config
+  #   - name: secret-volume
+  #     secret:
+  #       secretName: my-secret
+  volumes: []
+  # jobTemplate.volumeMounts: Mount volumes defined in `volumes` into containers
+  # Each entry maps a volume to a path inside the container
+  # Example:
+  # volumeMounts:
+  #   - name: config-volume
+  #     mountPath: /app/config
+  #     readOnly: true
+  #   - name: secret-volume
+  #     mountPath: /app/secret
+  #     readOnly: true
+  volumeMounts: []
+  # jobTemplate.nodeSelector: Use to schedule pods on nodes with specific labels.
+  # Example:
+  # nodeSelector:
+  #   has-gpu: "true"
+  nodeSelector: {}
+  # jobTemplate.tolerations: allow the scheduler to schedule pods onto nodes with matching taints.
+  # Example:
+  # tolerations:
+  #   - key: "architecture"
+  #     operator: "Equal"
+  #     value: "arm64"
+  #     effect: "NoSchedule"
+  tolerations: []
+  # jobTemplate.affinity: Provide advanced scheduling rules for pods.
+  # Can be used for node affinity, pod affinity, or pod anti-affinity.
+  # Example:
+  # affinity: 
+  #   nodeAffinity:
+  #     preferredDuringSchedulingIgnoredDuringExecution:
+  #       - weight: 1
+  #         preference:
+  #           matchExpressions:
+  #             - key: "zone"
+  #               operator: In
+  #               values:
+  #                 - "datacenter-1"
+  affinity: {}
+  # jobTemplate.priorityClassName: Name of an existing Kubernetes PriorityClass.
+  # Example:
+  # priorityClassName: "high-priority-job"
+  priorityClassName: ""
+  # jobTemplate.restartPolicy: Pod restart behavior
+  # Valid values: OnFailure / Never
+  # NOTE:
+  # - For Jobs/CronJobs, Kubernetes only allows "OnFailure" and "Never".
+  # - "Always" are only valid for Deployments
+  restartPolicy: OnFailure
+  # jobTemplate.initContainers: Define one or more init containers for the pod
+  # Init containers run before app containers start, useful for setup tasks
+  # that need to complete before the main container starts.
+  # Each entry maps directly to a Kubernetes container spec.
+  # Example:
+  # initContainers:
+  #   - name: wait-for-db
+  #     image: busybox:1.37.0
+  #     command:
+  #       - sh
+  #       - -c
+  #       - |
+  #         echo "Waiting for database..."
+  #         until nc -z db-host 5432; do
+  #           echo "Database not ready yet, retrying in 5s..."
+  #           sleep 5
+  #         done
+  #         echo "Database is ready!"
+  initContainers: []
+  # jobTemplate.sidecars: Additional containers to run alongside the main job container
+  # Sidecars share the same pod lifecycle as the job.
+  # Common use cases for Jobs/CronJobs:
+  # - log shipping (e.g. upload logs after job completion)
+  # - metrics or tracing exporters
+  # - helper processes (e.g. fetching artifacts, syncing data)
+  # IMPORTANT:
+  # - Sidecars MUST terminate for the Job to complete successfully.
+  # - Long-running or infinite-loop sidecars may cause Jobs to hang.
+  # Each entry maps directly to a Kubernetes container spec.
+  # Example:
+  #   - name: metrics-pusher
+  #     image: prom/pushgateway
+  #     args:
+  #       - "--push.disable-consistency-check"
+  sidecars: []

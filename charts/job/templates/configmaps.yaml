@@ -1,0 +1,42 @@
+{{- if and .Values.enabled (or .Values.job.enabled .Values.cronJob.enabled) }}
+{{- if .Values.jobTemplate.configMaps.env.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ default (printf "%s-env" (include "job.fullname" .)) .Values.jobTemplate.configMaps.env.name }}
+  labels:
+    {{- include "job.labels" . | nindent 4 }}
+data:
+  {{- range $key, $val := .Values.jobTemplate.configMaps.env.data }}
+  {{ $key }}: {{ $val | quote }}
+  {{- end }}
+---
+{{- end }}
+{{- if .Values.jobTemplate.configMaps.files.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ default (printf "%s-files" (include "job.fullname" .)) .Values.jobTemplate.configMaps.files.name }}
+  labels:
+    {{- include "job.labels" . | nindent 4 }}
+data:
+  {{- range $filename, $content := .Values.jobTemplate.configMaps.files.data }}
+  {{ $filename }}: |-
+{{ $content | indent 4 }}
+  {{- end }}
+---
+{{- end }}
+{{- if .Values.jobTemplate.configMaps.binaryFiles.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ default (printf "%s-binary" (include "job.fullname" .)) .Values.jobTemplate.configMaps.binaryFiles.name }}
+  labels:
+    {{- include "job.labels" . | nindent 4 }}
+binaryData:
+  {{- range $filename, $b64content := .Values.jobTemplate.configMaps.binaryFiles.data }}
+  {{ $filename }}: {{ $b64content | quote }}
+  {{- end }}
+---
+{{- end }}
+{{- end }}

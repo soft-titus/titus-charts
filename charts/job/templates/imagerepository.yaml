@@ -1,0 +1,18 @@
+{{- if and .Values.enabled (or .Values.job.enabled .Values.cronJob.enabled) .Values.jobTemplate.image.fluxImageAutoUpdate.enabled }}
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+metadata:
+  name: {{ include "job.fullname" . }}
+  namespace: {{ .Values.jobTemplate.image.fluxImageAutoUpdate.namespace | quote }}
+  labels:
+    {{- include "job.labels" . | nindent 4 }}
+spec:
+  image: {{ .Values.jobTemplate.image.repository }}
+  interval: 1m
+  {{- with .Values.jobTemplate.imagePullSecrets }}
+  {{- if gt (len .) 0 }}
+  secretRef:
+    name: {{ (index . 0).name }}
+  {{- end }}
+  {{- end }}
+{{- end }}

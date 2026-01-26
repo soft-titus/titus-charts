@@ -1,0 +1,19 @@
+{{- if and .Values.enabled (or .Values.job.enabled .Values.cronJob.enabled) .Values.jobTemplate.image.fluxImageAutoUpdate.enabled }}
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+metadata:
+  name: {{ include "job.fullname" . }}
+  namespace: {{ .Values.jobTemplate.image.fluxImageAutoUpdate.namespace | quote }}
+  labels:
+    {{- include "job.labels" . | nindent 4 }}
+spec:
+  imageRepositoryRef:
+    name: {{ include "job.fullname" . }}
+  filterTags:
+    {{- if .Values.jobTemplate.image.fluxImageAutoUpdate.pattern }}
+    pattern: {{ .Values.jobTemplate.image.fluxImageAutoUpdate.pattern | quote }}
+    {{- end }}
+  policy:
+    semver:
+      range: {{ .Values.jobTemplate.image.fluxImageAutoUpdate.semver | quote }}
+{{- end }}

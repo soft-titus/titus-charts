@@ -1,0 +1,130 @@
+{{- if and .Values.enabled .Values.cronJob.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "job.fullname" . }}
+  labels:
+    {{- include "job.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.cronJob.schedule | quote }}
+  suspend: {{ .Values.cronJob.suspend }}
+  concurrencyPolicy: {{ .Values.cronJob.concurrencyPolicy }}
+  successfulJobsHistoryLimit: {{ .Values.cronJob.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.cronJob.failedJobsHistoryLimit }}
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: {{ .Values.jobTemplate.ttlSecondsAfterFinished }}
+      backoffLimit: {{ .Values.jobTemplate.backoffLimit }}
+      activeDeadlineSeconds: {{ .Values.jobTemplate.activeDeadlineSeconds }}
+      template:
+        metadata:
+          labels:
+            {{- include "job.labels" . | nindent 12 }}
+            {{- with .Values.jobTemplate.podLabels }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- with .Values.jobTemplate.podAnnotations }}
+          annotations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        spec:
+          restartPolicy: {{ .Values.jobTemplate.restartPolicy }}
+          serviceAccountName: {{ include "job.serviceAccountName" . }}
+          automountServiceAccountToken: {{ .Values.jobTemplate.serviceAccount.automount }}
+          {{- with .Values.jobTemplate.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.jobTemplate.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.jobTemplate.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.jobTemplate.affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.jobTemplate.priorityClassName }}
+          priorityClassName: {{ .Values.jobTemplate.priorityClassName }}
+          {{- end }}
+          {{- with .Values.jobTemplate.podSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if and .Values.jobTemplate.initContainers (gt (len .Values.jobTemplate.initContainers) 0) }}
+          initContainers:
+            {{- toYaml .Values.jobTemplate.initContainers | nindent 12 }}
+          {{- end }}
+          containers:
+            - name: {{ .Chart.Name }}
+              image: "{{ .Values.jobTemplate.image.repository }}:{{ .Values.jobTemplate.image.tag | default .Chart.AppVersion }}"
+              imagePullPolicy: {{ .Values.jobTemplate.image.pullPolicy }}
+              {{- with .Values.jobTemplate.command }}
+              command:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+              {{- with .Values.jobTemplate.args }}
+              args:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+              {{- with .Values.jobTemplate.env }}
+              env:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+              {{- if or .Values.jobTemplate.envFrom .Values.jobTemplate.configMaps.env.enabled }}
+              envFrom:
+                {{- with .Values.jobTemplate.envFrom }}
+                {{- toYaml . | nindent 16 }}
+                {{- end }}
+                {{- if .Values.jobTemplate.configMaps.env.enabled }}
+                - configMapRef:
+                    name: {{ default (printf "%s-env" (include "job.fullname" .)) .Values.jobTemplate.configMaps.env.name }}
+                {{- end }}
+              {{- end }}
+              {{- if .Values.jobTemplate.resources }}
+              resources:
+                {{- toYaml .Values.jobTemplate.resources | nindent 16 }}
+              {{- end }}
+              {{- with .Values.jobTemplate.securityContext }}
+              securityContext:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+              {{- if or .Values.jobTemplate.volumeMounts .Values.jobTemplate.configMaps.files.enabled .Values.jobTemplate.configMaps.binaryFiles.enabled }}
+              volumeMounts:
+                {{- if .Values.jobTemplate.configMaps.files.enabled }}
+                - name: config-files
+                  mountPath: {{ .Values.jobTemplate.configMaps.files.mountPath }}
+                  readOnly: true
+                {{- end }}
+                {{- if .Values.jobTemplate.configMaps.binaryFiles.enabled }}
+                - name: config-binary-files
+                  mountPath: {{ .Values.jobTemplate.configMaps.binaryFiles.mountPath }}
+                  readOnly: true
+                {{- end }}
+                {{- with .Values.jobTemplate.volumeMounts }}
+                {{- toYaml . | nindent 16 }}
+                {{- end }}
+              {{- end }}
+            {{- if and .Values.jobTemplate.sidecars (gt (len .Values.jobTemplate.sidecars) 0) }}
+            {{- toYaml .Values.jobTemplate.sidecars | nindent 12 }}
+            {{- end }}
+          {{- if or .Values.jobTemplate.volumes .Values.jobTemplate.configMaps.files.enabled .Values.jobTemplate.configMaps.binaryFiles.enabled }}
+          volumes:
+            {{- if .Values.jobTemplate.configMaps.files.enabled }}
+            - name: config-files
+              configMap:
+                name: {{ default (printf "%s-files" (include "job.fullname" .)) .Values.jobTemplate.configMaps.files.name }}
+            {{- end }}
+            {{- if .Values.jobTemplate.configMaps.binaryFiles.enabled }}
+            - name: config-binary-files
+              configMap:
+                name: {{ default (printf "%s-binary" (include "job.fullname" .)) .Values.jobTemplate.configMaps.binaryFiles.name }}
+            {{- end }}
+            {{- with .Values.jobTemplate.volumes }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- end }}
+{{- end }}

@@ -1,0 +1,51 @@
+{{- if .Values.enabled }}
+
+[INFO] {{ include "job.fullname" . }} has been deployed.
+
+{{- if .Values.job.enabled }}
+[JOB] Job enabled
+-----------------
+Check Job status:
+  kubectl get job -n {{ .Release.Namespace }} {{ include "job.fullname" . }}
+
+Watch Job progress:
+  kubectl describe job -n {{ .Release.Namespace }} {{ include "job.fullname" . }}
+
+View Job logs:
+  kubectl logs -n {{ .Release.Namespace }} \
+    job/{{ include "job.fullname" . }}
+
+{{- end }}
+
+{{- if .Values.cronJob.enabled }}
+[CRONJOB] CronJob enabled
+------------------------
+Schedule:
+  {{ .Values.cronJob.schedule }}
+
+Check CronJob:
+  kubectl get cronjob -n {{ .Release.Namespace }} {{ include "job.fullname" . }}
+
+List Jobs created by the CronJob:
+  kubectl get jobs -n {{ .Release.Namespace }} \
+    --selector=job-name
+
+Manually trigger the CronJob:
+  kubectl create job -n {{ .Release.Namespace }} \
+    --from=cronjob/{{ include "job.fullname" . }} \
+    {{ include "job.fullname" . }}-manual
+
+View logs of the latest run:
+  kubectl logs -n {{ .Release.Namespace }} \
+    job/$(kubectl get jobs -n {{ .Release.Namespace }} \
+      --sort-by=.metadata.creationTimestamp \
+      -o jsonpath="{.items[-1:].metadata.name}")
+
+{{- end }}
+
+{{- if and (not .Values.job.enabled) (not .Values.cronJob.enabled) }}
+[WARNING] Both job.enabled and cronJob.enabled are false.
+No Job or CronJob resources were created.
+{{- end }}
+
+{{- end }}

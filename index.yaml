@@ -3,6 +3,15 @@ entries:
   job:
   - apiVersion: v2
     appVersion: 0.0.1
+    created: "2026-01-26T12:25:29.491815042Z"
+    digest: 4ae10af59bd1f0ea88aaabc361095706db5baca8b1495be44b92ece71c1093c7
+    name: job
+    type: application
+    urls:
+    - https://github.com/soft-titus/titus-charts/releases/download/job-0.0.2/job-0.0.2.tgz
+    version: 0.0.2
+  - apiVersion: v2
+    appVersion: 0.0.1
     created: "2026-01-26T06:05:49.209584687Z"
     digest: 95207f112b674794b00182a5ceaffc91eca8ba7cb395118b525ae344683f2468
     name: job
@@ -200,4 +209,4 @@ entries:
     urls:
     - https://github.com/soft-titus/titus-charts/releases/download/microservice-0.0.1/microservice-0.0.1.tgz
     version: 0.0.1
-generated: "2026-01-26T06:05:49.209635742Z"
+generated: "2026-01-26T12:25:29.491880176Z"

@@ -138,7 +138,7 @@ spec:
         {{- if .Values.configMaps.binaryFiles.enabled }}
         - name: config-binary-files
           configMap:
-            name: {{ default (printf "%s-binary-files" (include "microservice.fullname" .)) .Values.configMaps.binaryFiles.name }}
+            name: {{ default (printf "%s-binary" (include "microservice.fullname" .)) .Values.configMaps.binaryFiles.name }}
         {{- end }}
         {{- if .Values.pvc.enabled }}
         - name: data
